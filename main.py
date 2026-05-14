@@ -45,11 +45,20 @@ class SimulacionVisual:
         self.slider_radio = vp.slider(min=0.1, max=5, value=1.0, length=200, bind=self.actualizar_inputs)
         self.texto_radio = vp.wtext(text=f" {self.slider_radio.value} m\n")
 
-        vp.wtext(text="Fuerza (F): ")
-        self.slider_fuerza = vp.slider(min=0.0, max=50, value=5.0, length=200, bind=self.actualizar_inputs)
-        self.texto_fuerza = vp.wtext(text=f" {self.slider_fuerza.value} N\n\n")
-        self.motor.actualizar_parametros(fuerza=self.slider_fuerza.value)
-
+        # Reemplaza el slider de fuerza único por estos dos:
+        vp.wtext(text="Fuerza eje Y (Sube/Baja): ")
+        self.slider_fy = vp.slider(min=-50, max=50, value=0, length=200, bind=self.actualizar_inputs)
+        self.texto_fy = vp.wtext(text=" 0.0 N\n")
+        
+        vp.wtext(text="Fuerza eje Z (Entra/Sale): ")
+        self.slider_fz = vp.slider(min=-50, max=50, value=0, length=200, bind=self.actualizar_inputs)
+        self.texto_fz = vp.wtext(text=" 0.0 N\n\n")
+        
+        vp.wtext(text="Punto de aplicación (x): ")
+        self.slider_pos_x = vp.slider(min=-self.motor.radio, max=self.motor.radio, 
+                              value=self.motor.radio, length=200, bind=self.actualizar_inputs)
+        self.texto_pos_x = vp.wtext(text=f" {self.slider_pos_x.value:.1f} m\n")
+        
         # Panel de métricas en tiempo real
         self.escena.append_to_caption('--- Métricas Físicas ---\n')
         self.texto_metricas = vp.wtext(text=self.formatear_metricas())
@@ -71,12 +80,19 @@ class SimulacionVisual:
         else:
             self.cuerpo_3d = vp.cylinder(pos=vp.vec(0, -self.motor.radio, 0), axis=vp.vec(0, self.motor.radio*2, 0), 
                                          radius=self.motor.radio, texture=textura)
+            
+            
+        # Crear la flecha de la fuerza (en color rojo para que destaque)
+        self.flecha_f = vp.arrow(pos=vp.vec(self.motor.radio, 0, 0), 
+                                axis=vp.vec(0, 0, 0), 
+                                color=vp.color.red, 
+                                shaftwidth=0.1)
 
     def formatear_metricas(self):
         return (f"Inercia (I) : {self.motor.inercia:.4f} kg·m²\n"
-                f"Torque (τ)  : {self.motor.torque:.2f} N·m\n"
-                f"Acel. Angular (α): {self.motor.aceleracion_angular:.2f} rad/s²\n"
-                f"Vel. Angular (ω) : {self.motor.velocidad_angular:.2f} rad/s\n")
+                f"Torque (τ)  : {self.motor.torque.mag:.2f} N·m\n"
+                f"Acel. Angular (α): {self.motor.aceleracion_angular.mag:.2f} rad/s²\n"
+                f"Vel. Angular (ω) : {self.motor.velocidad_angular.mag:.2f} rad/s\n")
 
     # --- Callbacks de eventos UI ---
     def toggle_simulacion(self, boton):
@@ -97,13 +113,36 @@ class SimulacionVisual:
     def actualizar_inputs(self, evento=None):
         masa = self.slider_masa.value
         radio = self.slider_radio.value
-        fuerza = self.slider_fuerza.value
+        fy = self.slider_fy.value
+        fz = self.slider_fz.value 
+        pos_x = self.slider_pos_x.value
+        self.texto_pos_x.text = f" {pos_x:.1f} m\n"
         
         self.texto_masa.text = f" {masa:.1f} kg\n"
         self.texto_radio.text = f" {radio:.1f} m\n"
-        self.texto_fuerza.text = f" {fuerza:.1f} N\n\n"
+        self.texto_fy.text = f" {fy:.1f} N\n"
+        self.texto_fz.text = f" {fz:.1f} N\n\n"
+      
         
-        self.motor.actualizar_parametros(masa=masa, radio=radio, fuerza=fuerza)
+        # Creamos el vector de fuerza y se lo pasamos al motor
+        nueva_fuerza = vp.vec(0, fy, fz)
+        self.motor.fuerza_vec = nueva_fuerza 
+        self.motor.pos_aplicacion_x = pos_x
+        self.motor.fuerza_vec = vp.vec(0, self.slider_fy.value, self.slider_fz.value)
+        self.motor.actualizar_parametros(masa=self.slider_masa.value, radio=self.slider_radio.value)
+        
+        # Movemos la flecha al nuevo punto
+        if hasattr(self, 'flecha_f'):
+            self.flecha_f.pos = vp.vec(pos_x, 0, 0)
+            self.flecha_f.axis = self.motor.fuerza_vec * 0.2
+            
+            
+        # Actualizar la flecha visualmente (que indica donde se aplica la fuerza)
+        if hasattr(self, 'flecha_f'):
+            # Reubicar en el borde según el nuevo radio
+            self.flecha_f.pos = vp.vec(pos_x, 0, 0)
+            # Mostrar la dirección de la fuerza actual
+            self.flecha_f.axis = self.motor.fuerza_vec * 0.2
         
         # Actualizar el radio visual si no está corriendo
         if not self.en_ejecucion:
@@ -124,11 +163,21 @@ class SimulacionVisual:
                 # 1. Actualizar el estado físico
                 self.motor.integrar_paso(dt)
                 
-                # 2. Actualizar la visualización (Rotar sobre el eje Y)
-                # El ángulo de rotación por frame es omega * dt
-                self.cuerpo_3d.rotate(angle=self.motor.velocidad_angular * dt, axis=vp.vec(0,1,0))
+                # Obtenemos la dirección y la magnitud del vector ω
+                rapidez = self.motor.velocidad_angular.mag # Magnitud (escalar)
+                eje_giro = self.motor.velocidad_angular.hat # Dirección (unitario)
                 
-                # 3. Actualizar la UI
+                if rapidez > 0:
+                    #1. Rotamos el objeto usando su propio vector de velocidad
+                    self.cuerpo_3d.rotate(angle=rapidez * dt, axis=eje_giro)
+                    
+                    # 2. Rotar la POSICIÓN de la flecha para que siga al borde del cuerpo
+                    self.flecha_f.pos = self.flecha_f.pos.rotate(angle=rapidez * dt, axis=eje_giro)
+                    
+                    # 3. Rotar la DIRECCIÓN de la flecha para que siempre sea tangente
+                    self.flecha_f.axis = self.motor.fuerza_vec.rotate(angle=rapidez * dt, axis=eje_giro) * 0.2 
+                    # (Multiplicamos por 0.2 para que la flecha no sea gigante en pantalla)
+                
                 self.texto_metricas.text = self.formatear_metricas()
 
 # ==========================================
