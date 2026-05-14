@@ -74,7 +74,7 @@ class SimulacionVisual:
         self.slider_fy = vp.slider(min=-50, max=50, value=0, length=200, bind=self.actualizar_inputs)
         self.texto_fy = vp.wtext(text=" 0.0 N\n")
         
-        vp.wtext(text="Fuerza eje Z (Entra/Sale): ")
+        vp.wtext(text="Fuerza eje Z (N): ")
         self.slider_fz = vp.slider(min=-50, max=50, value=0, length=200, bind=self.actualizar_inputs)
         self.texto_fz = vp.wtext(text=" 0.0 N\n\n")
         
