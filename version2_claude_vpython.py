@@ -1,19 +1,19 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║       SIMULACIÓN 3D DE INERCIA ROTACIONAL Y MOVIMIENTO DE ROTACIÓN          ║
-║       Herramienta: VPython  |  Paradigma: Orientado a Objetos               ║
+║       SIMULACIÓN 3D DE INERCIA ROTACIONAL Y MOVIMIENTO DE ROTACIÓN           ║
+║       Herramienta: VPython  |  Paradigma: Orientado a Objetos                ║
 ║                                                                              ║
 ║  Fórmulas implementadas:                                                     ║
-║    - Esfera Sólida      : I = (2/5) M R²                                    ║
-║    - Cascarón Esférico  : I = (2/3) M R²                                    ║
-║    - Cilindro Sólido    : I = (1/2) M R²                                    ║
+║    - Esfera Sólida      : I = (2/5) M R²                                     ║
+║    - Cascarón Esférico  : I = (2/3) M R²                                     ║
+║    - Cilindro Sólido    : I = (1/2) M R²                                     ║
 ║    - Cascarón Cilíndrico: I = M R²                                           ║
 ║                                                                              ║
 ║  Motor de integración: Método de Euler                                       ║
 ║    τ = F · R                                                                 ║
 ║    α = τ / I                                                                 ║
-║    ω(t+dt) = ω(t) + α · dt                                                  ║
-║    θ(t+dt) = θ(t) + ω · dt                                                  ║
+║    ω(t+dt) = ω(t) + α · dt                                                   ║
+║    θ(t+dt) = θ(t) + ω · dt                                                   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
