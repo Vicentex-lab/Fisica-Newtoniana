@@ -1,5 +1,5 @@
 <<<<<<<< HEAD:prototipo1.py
-import vpython as vp
+import simulacion_vpython as vp
 
 # ==========================================
 # 1. MOTOR FÍSICO (Lógica y Matemáticas)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     app = SimulacionVisual()
     app.ejecutar()
 ========
-import vpython as vp
+import simulacion_vpython as vp
 
 # ==========================================
 # 1. MOTOR FÍSICO (Lógica y Matemáticas)

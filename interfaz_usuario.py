@@ -1,4 +1,4 @@
-import vpython as vp
+import simulacion_vpython as vp
 from motor_fisico import MotorFisico
 
 # ==========================================

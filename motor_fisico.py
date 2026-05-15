@@ -1,4 +1,4 @@
-import vpython as vp # Para usar vectores de VPython
+import simulacion_vpython as vp # Para usar vectores de VPython
 
 # ==========================================
 # 1. MOTOR FÍSICO (Lógica y Matemáticas)
