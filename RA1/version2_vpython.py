@@ -18,7 +18,7 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
-from simulacion_vpython import (
+from RA1.simulacion_vpython import (
     scene, sphere, cylinder, box, ring, arrow, label, wtext,
     slider, button, menu, rate,
     vector, color, pi, cos, sin,
@@ -623,7 +623,7 @@ if __name__ == '__main__':
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
-from simulacion_vpython import (
+from RA1.simulacion_vpython import (
     scene, sphere, cylinder, box, ring, arrow, label, wtext,
     slider, button, menu, rate,
     vector, color, pi, cos, sin,

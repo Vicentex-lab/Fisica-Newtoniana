@@ -1,5 +1,5 @@
-import simulacion_vpython as vp
-from motor_fisico import MotorFisico
+import RA1.simulacion_vpython as vp
+from RA1.motor_fisico import MotorFisico
 
 # ==========================================
 # 2. VISUALIZACIÓN E INTERFAZ (VPython)
