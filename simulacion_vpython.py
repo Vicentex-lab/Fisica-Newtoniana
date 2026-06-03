@@ -1,4 +1,4 @@
-<<<<<<<< HEAD:vpython.py
+
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║       SIMULACIÓN 3D DE INERCIA ROTACIONAL Y MOVIMIENTO DE ROTACIÓN           ║
@@ -603,7 +603,6 @@ def main():
 # ── Ejecutar ──────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     main()
-========
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║       SIMULACIÓN 3D DE INERCIA ROTACIONAL Y MOVIMIENTO DE ROTACIÓN           ║
@@ -1208,4 +1207,3 @@ def main():
 # ── Ejecutar ──────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     main()
->>>>>>>> 55bb517e3ff651fafeb15bdeb3ef5f23c65ddaab:version2_vpython.py
