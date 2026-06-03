@@ -63,7 +63,7 @@ class SimulacionVisual:
         self.escena.append_to_caption('\n\n')
 
         # Selector de cuerpo rígido y densidad
-        vp.menu(choices=['Esfera sólida', 'Cascarón esférico', 'Cilindro sólido', 'Cascarón cilíndrico'], 
+        vp.menu(choices=['Esfera sólida', 'Cascarón esférico', 'Cilindro sólido', 'Cascarón cilíndrico', 'Barra cuadrada'], 
                 bind=self.cambiar_forma)
         self.escena.append_to_caption('  ')
         vp.checkbox(bind=self.toggle_densidad, text='Densidad variable (ρ = kr)')
@@ -123,6 +123,12 @@ class SimulacionVisual:
         if "Esfera" in self.motor.tipo_cuerpo or "Cascarón esférico" in self.motor.tipo_cuerpo:
             self.cuerpo_3d = vp.sphere(pos=vp.vec(0,0,0), radius=self.motor.radio, texture=textura)
             vp.cylinder(pos=vp.vec(0, -self.motor.radio*1.5, 0), axis=vp.vec(0, self.motor.radio*3, 0), radius=0.05)
+        elif self.motor.tipo_cuerpo == "Barra cuadrada":
+            self.cuerpo_3d = vp.box(pos=vp.vec(0,0,0), 
+                                    length=self.motor.radio*2, 
+                                    height=self.motor.radio*0.5, 
+                                    width=self.motor.radio*0.5, 
+                                    texture=textura)
         else:
             self.cuerpo_3d = vp.cylinder(pos=vp.vec(0, -self.motor.radio, 0), axis=vp.vec(0, self.motor.radio*2, 0), 
                                          radius=self.motor.radio, texture=textura)
@@ -131,10 +137,14 @@ class SimulacionVisual:
                                 axis=vp.vec(0, 0, 0), color=vp.color.red, shaftwidth=0.1)
 
     def formatear_metricas(self):
+        # Calcular revoluciones totales (ángulo total / 2π)
+        revoluciones = self.motor.angulo_rotado / (2 * vp.pi)
+        
         return (f"Inercia (I) : {self.motor.inercia:.4f} kg·m²\n"
                 f"Torque (τ)  : {self.motor.torque.mag:.2f} N·m\n"
                 f"Acel. Angular (α): {self.motor.aceleracion_angular.mag:.2f} rad/s²\n"
-                f"Vel. Angular (ω) : {self.motor.velocidad_angular.mag:.2f} rad/s\n")
+                f"Vel. Angular (ω) : {self.motor.velocidad_angular.mag:.2f} rad/s\n"
+                f"Revoluciones     : {revoluciones:.2f} rev\n")
 
     # --- Callbacks de eventos UI ---
     def toggle_simulacion(self, boton):
@@ -201,13 +211,14 @@ class SimulacionVisual:
         # Actualizar visual en pausa
         if not self.en_ejecucion:
             self.flecha_f.pos = vp.vec(self.motor.pos_aplicacion_x, 0, 0)
-            self.cuerpo_3d.radius = self.motor.radio
             
-            if self.motor.fuerza_vec.mag == 0:
-                self.flecha_f.visible = False
+            # Control dinámico de escala
+            if self.motor.tipo_cuerpo == "Barra cuadrada":
+                self.cuerpo_3d.length = self.motor.radio * 2
+                self.cuerpo_3d.height = self.motor.radio * 0.5
+                self.cuerpo_3d.width = self.motor.radio * 0.5
             else:
-                self.flecha_f.visible = True
-                self.flecha_f.axis = self.motor.fuerza_vec * 0.2
+                self.cuerpo_3d.radius = self.motor.radio
 
     # --- Bucle Principal ---
     def ejecutar(self):
@@ -233,8 +244,13 @@ class SimulacionVisual:
                 # 1. Actualizar el estado físico
                 self.motor.integrar_paso(dt)
                 
-                # 2. Visualizar el cambio del radio
-                self.cuerpo_3d.radius = self.motor.radio
+                # 2. Visualizar el cambio de escala
+                if self.motor.tipo_cuerpo == "Barra cuadrada":
+                    self.cuerpo_3d.length = self.motor.radio * 2
+                    self.cuerpo_3d.height = self.motor.radio * 0.5
+                    self.cuerpo_3d.width = self.motor.radio * 0.5
+                else:
+                    self.cuerpo_3d.radius = self.motor.radio
                 if "Cilindro" in self.motor.tipo_cuerpo:
                     self.cuerpo_3d.pos = vp.vec(0, -self.motor.radio, 0)
                     self.cuerpo_3d.axis = vp.vec(0, self.motor.radio*2, 0)

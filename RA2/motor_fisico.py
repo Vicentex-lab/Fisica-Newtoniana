@@ -24,7 +24,7 @@ class MotorFisico:
         self.torque = vp.vec(0, 0, 0)                 # τ (N·m)
         self.fuerza_vec = vp.vec(0, 0, 0)             # F (N)
         self.pos_aplicacion_x = radio                 # Punto r donde se aplica F
-        
+        self.angulo_rotado = 0.0                      # Acumulador de radianes
         self.inercia = 0.0 # Escalar
         self.calcular_inercia()
         
@@ -41,6 +41,8 @@ class MotorFisico:
                 self.inercia = (1/2) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón cilíndrico":
                 self.inercia = self.masa * (self.radio**2)
+            elif self.tipo_cuerpo == "Barra cuadrada":
+                self.inercia = (1/3) * self.masa * (self.radio**2)
         else:
             # Densidad variable (rho = k*r)
             if self.tipo_cuerpo == "Esfera sólida":
@@ -78,9 +80,11 @@ class MotorFisico:
         
         # 4. Integración de Euler Vectorial
         self.velocidad_angular += self.aceleracion_angular * dt
+        self.angulo_rotado += self.velocidad_angular.mag * dt
 
     def reiniciar(self):
         """Restablece las variables cinemáticas a cero."""
         self.velocidad_angular = vp.vec(0,0,0)
         self.aceleracion_angular = vp.vec(0,0,0)
         self.torque = vp.vec(0,0,0)
+        self.angulo_rotado = 0.0
