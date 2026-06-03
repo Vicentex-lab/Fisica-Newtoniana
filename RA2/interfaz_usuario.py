@@ -219,6 +219,11 @@ class SimulacionVisual:
                 self.cuerpo_3d.width = self.motor.radio * 0.5
             else:
                 self.cuerpo_3d.radius = self.motor.radio
+            if self.motor.fuerza_vec.mag == 0:
+                self.flecha_f.visible = False
+            else:
+                self.flecha_f.visible = True
+                self.flecha_f.axis = self.motor.fuerza_vec * 0.2
 
     # --- Bucle Principal ---
     def ejecutar(self):
