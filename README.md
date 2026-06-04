@@ -1,7 +1,7 @@
 # Fisica-Newtoniana
 
 - RA1: Posición de centro de masa de una figura.
-- RA2: Momento de inercia de un cuerpo.
+- RA2: Momento de inercia de un cuerpo (ecuación de la rotación).
 - RA3: ---
 
 Bitácora de reuniones:
@@ -39,7 +39,7 @@ Tercera reunión (viernes 29 de mayo):
 - Nuevas correcciones para el programa del RA2:
 1. Ver las revoluciones que presenta el cuerpo al aplicarle la fuerza.
 2. Agregar una barra como opción de cuerpo seleccionable.
-3. A futuro, ver si es posible cambiar el eje de giro (Teorema de Steiner)
+3. A futuro, ver si es posible cambiar el eje de giro (Teorema de Steiner).
 
 - Presentación de prototipo de programa de RA1, usando como motor físico la librería Pymunk y como motor visual la librería Pygame.
 
