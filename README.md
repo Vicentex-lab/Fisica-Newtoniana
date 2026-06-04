@@ -1,7 +1,7 @@
 # Fisica-Newtoniana
 
 - RA1: Posición de centro de masa de una figura.
-- RA2: Momento de inercia de un cuerpo (simulador de cinemática rotacional).
+- RA2: Simulador de Cinemática Rotacional
 - RA3: ---
 
 Bitácora de reuniones:
