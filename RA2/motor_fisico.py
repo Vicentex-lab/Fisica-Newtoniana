@@ -80,6 +80,8 @@ class MotorFisico:
         
         # 4. Integración de Euler Vectorial
         self.velocidad_angular += self.aceleracion_angular * dt
+        
+        #acumulador angulo rotado
         self.angulo_rotado += self.velocidad_angular.mag * dt
 
     def reiniciar(self):
