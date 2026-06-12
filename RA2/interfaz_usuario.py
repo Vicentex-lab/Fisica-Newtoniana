@@ -100,6 +100,11 @@ class SimulacionVisual:
         self.input_pos_x = vp.winput(text=f"{self.motor.radio}", bind=self.sync_inputs)
         self.escena.append_to_caption('\n\n')
         
+        vp.wtext(text="Posición del Eje de Giro (x): ")
+        self.slider_eje = vp.slider(min=-5.0, max=5.0, value=0.0, length=200, bind=self.sync_sliders)
+        self.input_eje = vp.winput(text="0.0", bind=self.sync_inputs)
+        self.escena.append_to_caption('\n\n')
+        
         vp.wtext(text="Duración de la Fuerza (s) [0 = Infinita]: ")
         self.input_duracion = vp.winput(text="0", bind=self.sync_inputs)
         self.escena.append_to_caption('\n\n')
@@ -117,6 +122,9 @@ class SimulacionVisual:
         if hasattr(self, 'flecha_f'):
             self.flecha_f.visible = False
             del self.flecha_f
+        if hasattr(self, 'eje_steiner'):
+            self.eje_steiner.visible = False
+            del self.eje_steiner
 
         textura = vp.textures.wood
 
@@ -135,6 +143,11 @@ class SimulacionVisual:
             
         self.flecha_f = vp.arrow(pos=vp.vec(self.motor.pos_aplicacion_x, 0, 0), 
                                 axis=vp.vec(0, 0, 0), color=vp.color.red, shaftwidth=0.1)
+        #Crear el indicador visual del eje modificado por Steiner (Color Amarillo)
+        largo_eje = self.motor.radio * 3
+        self.eje_steiner = vp.cylinder(pos=vp.vec(self.motor.pos_eje, -largo_eje/2, 0), 
+                                       axis=vp.vec(0, largo_eje, 0), 
+                                       radius=0.03, color=vp.color.yellow)
 
     def formatear_metricas(self):
         # Calcular revoluciones totales (ángulo total / 2π)
@@ -173,6 +186,7 @@ class SimulacionVisual:
         self.input_fy.text = f"{self.slider_fy.value:.1f}"
         self.input_fz.text = f"{self.slider_fz.value:.1f}"
         self.input_pos_x.text = f"{self.slider_pos_x.value:.1f}"
+        self.input_eje.text = f"{self.slider_eje.value:.1f}"
         self.aplicar_cambios()
 
     def sync_inputs(self, evento=None):
@@ -184,6 +198,7 @@ class SimulacionVisual:
             self.slider_fy.value = float(self.input_fy.text)
             self.slider_fz.value = float(self.input_fz.text)
             self.slider_pos_x.value = float(self.input_pos_x.text)
+            self.slider_eje.value = float(self.input_eje.text)
             self.duracion_max = float(self.input_duracion.text)
             self.aplicar_cambios()
         except ValueError:
@@ -195,6 +210,7 @@ class SimulacionVisual:
             self.input_fz.text = f"{self.slider_fz.value:.1f}"
             self.input_pos_x.text = f"{self.slider_pos_x.value:.1f}"
             self.input_duracion.text = f"{self.duracion_max}"
+            self.input_eje.text = f"{self.slider_eje.value:.1f}"
 
     def aplicar_cambios(self):
         """Sincroniza los valores visuales validados con el motor físico."""
@@ -206,11 +222,17 @@ class SimulacionVisual:
         # Sincronizar Motor
         self.motor.fuerza_vec = vp.vec(self.slider_fx.value, self.slider_fy.value, self.slider_fz.value)
         self.motor.pos_aplicacion_x = self.slider_pos_x.value
+        self.motor.pos_eje = self.slider_eje.value
         self.motor.actualizar_parametros(masa=self.slider_masa.value, radio=self.slider_radio.value)
-        
+        self.motor.calcular_inercia()
         # Actualizar visual en pausa
         if not self.en_ejecucion:
             self.flecha_f.pos = vp.vec(self.motor.pos_aplicacion_x, 0, 0)
+            # Actualizar posición y tamaño del eje amarillo al mover sliders
+            if hasattr(self, 'eje_steiner'):
+                largo_eje = self.motor.radio * 3
+                self.eje_steiner.pos = vp.vec(self.motor.pos_eje, -largo_eje/2, 0)
+                self.eje_steiner.axis = vp.vec(0, largo_eje, 0)
             
             # Control dinámico de escala
             if self.motor.tipo_cuerpo == "Barra cuadrada":
@@ -264,23 +286,23 @@ class SimulacionVisual:
                 eje_giro = self.motor.velocidad_angular.hat
                 
                 if rapidez > 0:
-                    # Calcular el centro de masa visual para la rotación
-                    centro_rotacion = vp.vec(0, 0, 0)
+                    # Calcular el centro de rotación modificado por Steiner
+                    centro_rotacion = vp.vec(self.motor.pos_eje, 0, 0)
                     if "Cilindro" in self.motor.tipo_cuerpo:
-                        centro_rotacion = self.cuerpo_3d.pos + self.cuerpo_3d.axis / 2
+                        centro_rotacion = vp.vec(self.motor.pos_eje, -self.motor.radio, 0) + self.cuerpo_3d.axis / 2
 
-                    # Rotamos el cuerpo especificando el origen
+                    # Rotamos el cuerpo especificando el nuevo origen
                     self.cuerpo_3d.rotate(angle=rapidez * dt, axis=eje_giro, origin=centro_rotacion)
                     
-
-                    # Rotamos la flecha y evitamos el colapso si la fuerza es cero
-                    self.flecha_f.pos = self.flecha_f.pos.rotate(angle=rapidez * dt, axis=eje_giro)
+                    # Rotar la flecha de fuerza respecto al nuevo eje (usando vectores relativos)
+                    vec_relativo_pos = self.flecha_f.pos - centro_rotacion
+                    self.flecha_f.pos = centro_rotacion + vec_relativo_pos.rotate(angle=rapidez * dt, axis=eje_giro)
                     
                     if self.motor.fuerza_vec.mag == 0:
                         self.flecha_f.visible = False
                     else:
                         self.flecha_f.visible = True
-                        self.flecha_f.axis = self.motor.fuerza_vec.rotate(angle=rapidez * dt, axis=eje_giro) * 0.2 
+                        self.flecha_f.axis = self.motor.fuerza_vec.rotate(angle=rapidez * dt, axis=eje_giro) * 0.2
                     
                 
                 self.texto_metricas.text = self.formatear_metricas()

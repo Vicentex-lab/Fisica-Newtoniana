@@ -24,6 +24,7 @@ class MotorFisico:
         self.torque = vp.vec(0, 0, 0)                 # τ (N·m)
         self.fuerza_vec = vp.vec(0, 0, 0)             # F (N)
         self.pos_aplicacion_x = radio                 # Punto r donde se aplica F
+        self.pos_eje = 0.0 #Posición del eje de rotación (d)
         self.angulo_rotado = 0.0                      # Acumulador de radianes
         self.inercia = 0.0 # Escalar
         self.calcular_inercia()
@@ -31,6 +32,7 @@ class MotorFisico:
 
     def calcular_inercia(self):
         """Calcula el momento de inercia dinámicamente según el cuerpo seleccionado."""
+        inercia_cm = 0.0 # Variable temporal para el I en el centro de masa
         if not self.densidad_variable:
             # Densidad uniforme
             if self.tipo_cuerpo == "Esfera sólida":
@@ -53,6 +55,8 @@ class MotorFisico:
                 self.inercia = (3/5) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón cilíndrico":
                 self.inercia = self.masa * (self.radio**2) # No cambia, masa en el borde
+        # APLICAR TEOREMA DE STEINER: I = I_cm + M*d^2
+        self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
             
         # Evitar división por cero 
         if self.inercia <= 0: 
@@ -69,8 +73,8 @@ class MotorFisico:
         Derivación e integración paso a paso de las ecuaciones de movimiento.
         """
         
-        # 1. Definimos el vector posición (Brazo de palanca r)
-        brazo = vp.vec(self.pos_aplicacion_x, 0, 0)
+        # 1. Definimos el vector posición (Brazo de palanca relativo al eje)
+        brazo = vp.vec(self.pos_aplicacion_x - self.pos_eje, 0, 0)
         
         # 2. Torque Vectorial: T = r x F
         self.torque = vp.cross(brazo, self.fuerza_vec)
