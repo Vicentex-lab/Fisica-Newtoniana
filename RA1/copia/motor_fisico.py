@@ -25,6 +25,7 @@ class MotorFisica:
             "triangulo": [(0, -57.7), (-50, 28.9), (50, 28.9)],
             "cuadrado": [(-40, -40), (40, -40), (40, 40), (-40, 40)],
             "cuerda": [(-50, 0), (50, 0)]
+            # "barra" ahora se calcula dinámicamente en crear_figura
         }
 
         self.lista_particulas = []  
@@ -45,17 +46,18 @@ class MotorFisica:
     def crear_figura(self, tipo_figura, masas, velocidades_y, en_vuelo):
         self.limpiar_espacio()
        
-        vertices_objetivo = self.vertices[tipo_figura]
+        # Generación geométrica de los vértices objetivo
+        if tipo_figura == "barra":
+            num_p = len(masas)
+            ancho_total = 200.0  # Longitud de la barra en píxeles
+            vertices_objetivo = [(-ancho_total/2 + (i * (ancho_total / (num_p - 1))), 0) for i in range(num_p)]
+        else:
+            vertices_objetivo = self.vertices[tipo_figura]
         
         # --- ECUACIÓN 1: MASA TOTAL DEL SISTEMA ---
-        # M = Σ m_i
         masa_total = sum(masas)
         
         # --- ECUACIÓN 2: GEOMETRÍA DEL CENTRO DE MASA EN REPOSO ---
-        # Coordenadas ponderadas por masa para ubicar el centro de gravedad del sistema de puntos:
-        # R_cm = (1 / M) * Σ (m_i * r_i)
-        # R_cm.x = (m1*x1 + m2*x2 + ...) / M
-        # R_cm.y = (m1*y1 + m2*y2 + ...) / M
         cx = sum(m * v[0] for m, v in zip(masas, vertices_objetivo)) / masa_total
         cy = sum(m * v[1] for m, v in zip(masas, vertices_objetivo)) / masa_total
 
@@ -64,26 +66,21 @@ class MotorFisica:
 
         # 1. Crear partículas puntuales
         for i, (v, m, vy) in enumerate(zip(vertices_objetivo, masas, velocidades_y)):
-            # Traslación de los vértices al nuevo sistema de referencia relativo al Centro de Masa (Desacoplamiento):
-            # r_local = r_original - R_cm
+            # Traslación de los vértices al nuevo sistema de referencia relativo al Centro de Masa
             pos_local_x = v[0] - cx
             pos_local_y = v[1] - cy
             
-            # Condición de Partícula Puntual sin rotación propia:
-            # Anular aceleración angular (Mom. in inf)
+            # Condición de Partícula Puntual sin rotación propia (Momento de inercia infinito)
             p_body = pymunk.Body(m, float('inf'))
             p_body.position = pos_inicial_cm + (pos_local_x, pos_local_y)
             
             # --- ECUACIÓN 3: VECTOR VELOCIDAD INICIAL ---
-            # V_i = (v_x * i) + (v_y * j)
-            # Componente X: v_x = constante = 280 px/s (2.8 m/s)
-            # Componente Y: Lanzamiento Vertical / Caída Libre inicializado con el valor del slider (vy)
             if en_vuelo:
                 p_body.velocity = pymunk.Vec2d(280, vy)
             else:
                 p_body.velocity = pymunk.Vec2d(0, 0)
             
-            p_shape = pymunk.Circle(p_body, 8)
+            p_shape = pymunk.Circle(p_body, 6 if tipo_figura == "barra" else 8)
             p_shape.elasticity = 0.1
             p_shape.friction = 0.9
             
@@ -114,17 +111,31 @@ class MotorFisica:
                 joint = pymunk.PinJoint(body_a, body_b, (0,0), (0,0))
                 self.lista_constraints.append(joint)
                 self.space.add(joint)
-            # Diagonales estructurales rígidas para asegurar la indeformabilidad geométrica del plano (Celosía)
             j_diag1 = pymunk.PinJoint(self.lista_particulas[0], self.lista_particulas[2], (0,0), (0,0))
             j_diag2 = pymunk.PinJoint(self.lista_particulas[1], self.lista_particulas[3], (0,0), (0,0))
             self.lista_constraints.extend([j_diag1, j_diag2])
             self.space.add(j_diag1, j_diag2)
+            
+        elif tipo_figura == "barra" and num_p >= 2:
+            # Conexión lineal en serie (Esqueleto base de la barra)
+            for i in range(num_p - 1):
+                joint = pymunk.PinJoint(self.lista_particulas[i], self.lista_particulas[i+1], (0,0), (0,0))
+                self.lista_constraints.append(joint)
+                self.space.add(joint)
+                
+            # Celosía estructural cruzada automática para asegurar rigidez infinita (no se dobla por el peso)
+            for i in range(num_p - 2):
+                j_doble = pymunk.PinJoint(self.lista_particulas[i], self.lista_particulas[i+2], (0,0), (0,0))
+                self.lista_constraints.append(j_doble)
+                self.space.add(j_doble)
+                
+            # Traba extra estructural de extremo a extremo
+            joint_extremo = pymunk.PinJoint(self.lista_particulas[0], self.lista_particulas[-1], (0,0), (0,0))
+            self.lista_constraints.append(joint_extremo)
+            self.space.add(joint_extremo)
 
     def actualizar(self, dt):
-        # --- ECUACIÓN 4: INTEGRACIÓN NUMÉRICA (Método de Euler Simpletico) ---
-        # Modifica el estado del universo físico calculando las aproximaciones de Newton en diferenciales discretos:
-        # 1. v(t + dt) = v(t) + a(t) * dt     (Cambio de velocidad debido a la gravedad 'g')
-        # 2. x(t + dt) = x(t) + v(t + dt) * dt (Cambio de posición debido a la nueva velocidad calculada)
+        # --- ECUACIÓN 4: INTEGRACIÓN NUMÉRICA (Método de Euler Simpléctico) ---
         self.space.step(dt)
 
     def obtener_centro_masa_y_velocidad(self):
@@ -132,15 +143,11 @@ class MotorFisica:
             return pymunk.Vec2d(0,0), 0.0
             
         # --- ECUACIÓN 5: CENTRO DE MASA DINÁMICO EN TIEMPO REAL ---
-        # El centro de masa se desplaza continuamente a medida que las partículas se mueven o rotan:
-        # X_cm = Σ (m_i * x_i) / M   |   Y_cm = Σ (m_i * y_i) / M
         m_total = sum(p.mass for p in self.lista_particulas)
         cx = sum(p.position.x * p.mass for p in self.lista_particulas) / m_total
         cy = sum(p.position.y * p.mass for p in self.lista_particulas) / m_total
         
         # --- ECUACIÓN 6: VECTOR VELOCIDAD DEL CENTRO DE MASA ---
-        # Derivada de la posición del Centro de Masa respecto al tiempo.
-        # V_cm = (1 / M) * Σ (m_i * v_i)
         v_cm_x = sum(p.velocity.x * p.mass for p in self.lista_particulas) / m_total
         v_cm_y = sum(p.velocity.y * p.mass for p in self.lista_particulas) / m_total
         

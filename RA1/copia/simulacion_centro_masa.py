@@ -25,22 +25,17 @@ vels_cuadrado = [-850.0, -850.0, -850.0, -850.0]
 masas_cuerda = [1.0, 1.0]
 vels_cuerda = [-850.0, -850.0]
 
+# --- Configuración Dinámica Avanzada para la Barra Continua ---
+NUM_PARTICULAS_BARRA = 25  # ¡Cambia este número para agregar más resolución al continuo!
+exponente_barra = 1.0  
+vel_unificada_barra = -850.0 
+masas_barra = [float(i)**(exponente_barra - 1.0) for i in range(1, NUM_PARTICULAS_BARRA + 1)]
+vels_barra = [vel_unificada_barra] * NUM_PARTICULAS_BARRA
+
 figura_seleccionada = "triangulo" 
 modo_slider = "masas"
 simulacion_activa = False  
 rastro_cm = [] 
-
-# --- Lista de listas para almacenar las trayectorias de cada partícula ---
-# Soporta hasta 4 partículas (que es el máximo de partículas en las figuras)
-rastros_particulas = [[], [], [], []]
-# Paleta de colores para diferenciar visualmente cada partícula
-COLORES_PARTICULAS = [
-    (0, 255, 255),   # Cyan para Partícula 1
-    (255, 0, 255),   # Magenta para Partícula 2
-    (0, 255, 0),     # Verde brillante para Partícula 3
-    (255, 165, 0)    # Naranja para Partícula 4
-]
-# -----------------------------------------------------------------------------
 
 class Slider:
     def __init__(self, x, y, ancho, min_val, max_val, val_inicial, etiqueta):
@@ -56,7 +51,11 @@ class Slider:
     def dibujar(self, superficie, color_control):
         pygame.draw.line(superficie, (100, 100, 100), (self.x, self.y), (self.x + self.ancho, self.y), 4)
         pygame.draw.circle(superficie, color_control, (int(self.boton_x), self.y), 10)
-        suffix = " m/s" if "Velocidad" in self.etiqueta_texto else " kg"
+        
+        if "Velocidad" in self.etiqueta_texto: suffix = " m/s"
+        elif "Gradiente" in self.etiqueta_texto: suffix = ""
+        else: suffix = " kg"
+            
         txt = fuente_normal.render(f"{self.etiqueta_texto}: {self.valor:.1f}{suffix}", True, (255, 255, 255))
         superficie.blit(txt, (self.x, self.y - 25))
 
@@ -73,9 +72,23 @@ class Slider:
 sliders = [Slider(50, 120 + i*60, 200, 1.0, 50.0, 1.0, f"P{i+1}") for i in range(4)]
 
 def actualizar_interfaz_sliders():
+    global exponente_barra, vel_unificada_barra, masas_barra, vels_barra
+    
+    if figura_seleccionada == "barra":
+        if modo_slider == "masas":
+            sliders[0].min_val, sliders[0].max_val = 1.0, 6.0
+            sliders[0].valor = exponente_barra
+            sliders[0].etiqueta_texto = "ρ = kx"
+        else:
+            sliders[0].min_val, sliders[0].max_val = 3.0, 14.0
+            sliders[0].valor = abs(vel_unificada_barra) / 100.0
+            sliders[0].etiqueta_texto = "Velocidad Inicial Barra"
+        sliders[0].actualizar_boton()
+        return
+
     if figura_seleccionada == "triangulo": m_act, v_act = masas_triangulo, vels_triangulo
     elif figura_seleccionada == "cuadrado": m_act, v_act = masas_cuadrado, vels_cuadrado
-    else: m_act, v_act = masas_cuerda, vels_cuerda
+    elif figura_seleccionada == "cuerda": m_act, v_act = masas_cuerda, vels_cuerda
     
     lim = len(m_act)
     for i in range(lim):
@@ -89,14 +102,15 @@ def actualizar_interfaz_sliders():
             sliders[i].etiqueta_texto = f"Velocidad Inicial Partícula {i+1}"
         sliders[i].actualizar_boton()
 
-# Inicialización inicial controlada
+# Inicialización
 motor.crear_figura(figura_seleccionada, masas_triangulo, vels_triangulo, False)
 actualizar_interfaz_sliders()
 
 ejecutando = True
-btn_triangulo_rect = pygame.Rect(50, 360, 100, 35)
-btn_cuadrado_rect = pygame.Rect(160, 360, 100, 35)
-btn_cuerda_rect = pygame.Rect(270, 360, 150, 35)
+btn_triangulo_rect = pygame.Rect(50, 380, 100, 35)
+btn_cuadrado_rect = pygame.Rect(160, 380, 100, 35)
+btn_cuererda_rect = pygame.Rect(270, 380, 100, 35)
+btn_barra_rect = pygame.Rect(380, 380, 100, 35)
 
 while ejecutando:
     screen.fill((15, 15, 15))
@@ -107,17 +121,14 @@ while ejecutando:
     
     if figura_seleccionada == "triangulo": m_act, v_act = masas_triangulo, vels_triangulo
     elif figura_seleccionada == "cuadrado": m_act, v_act = masas_cuadrado, vels_cuadrado
-    else: m_act, v_act = masas_cuerda, vels_cuerda
+    elif figura_seleccionada == "cuerda": m_act, v_act = masas_cuerda, vels_cuerda
+    else: m_act, v_act = masas_barra, vels_barra
         
     pos_cm_real, velocidad_m_s = motor.obtener_centro_masa_y_velocidad()
 
     if simulacion_activa:
         motor.actualizar(1.0 / 60.0)
         rastro_cm.append((int(pos_cm_real.x), int(pos_cm_real.y)))
-        
-        # --- Capturar la posición actual de cada partícula viva en el motor ---
-        for i, particula in enumerate(motor.lista_particulas):
-            rastros_particulas[i].append((int(particula.position.x), int(particula.position.y)))
         
     mx, my = pygame.mouse.get_pos()
     
@@ -130,7 +141,6 @@ while ejecutando:
                 motor.crear_figura(figura_seleccionada, m_act, v_act, True)
             elif event.key == pygame.K_r:
                 simulacion_activa = False; rastro_cm = []
-                rastros_particulas = [[], [], [], []]
                 motor.crear_figura(figura_seleccionada, m_act, v_act, False)
                 actualizar_interfaz_sliders()
             elif event.key in (pygame.K_v, pygame.K_m) and not simulacion_activa:
@@ -143,19 +153,20 @@ while ejecutando:
                 figura_seleccionada = "triangulo"; figura_cambiada = True
             elif btn_cuadrado_rect.collidepoint(mx, my): 
                 figura_seleccionada = "cuadrado"; figura_cambiada = True
-            elif btn_cuerda_rect.collidepoint(mx, my): 
+            elif btn_cuererda_rect.collidepoint(mx, my): 
                 figura_seleccionada = "cuerda"; figura_cambiada = True
+            elif btn_barra_rect.collidepoint(mx, my): 
+                figura_seleccionada = "barra"; figura_cambiada = True
             
             if figura_cambiada:
                 if figura_seleccionada == "triangulo": m_act, v_act = masas_triangulo, vels_triangulo
                 elif figura_seleccionada == "cuadrado": m_act, v_act = masas_cuadrado, vels_cuadrado
-                else: m_act, v_act = masas_cuerda, vels_cuerda
+                elif figura_seleccionada == "cuerda": m_act, v_act = masas_cuerda, vels_cuerda
+                else: m_act, v_act = masas_barra, vels_barra
                 actualizar_interfaz_sliders()
-                # --- Limpiar rastros si se cambia de figura en edición ---
-                rastros_particulas = [[], [], [], []]
                 motor.crear_figura(figura_seleccionada, m_act, v_act, False)
             
-            limites = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
+            limites = 1 if figura_seleccionada == "barra" else (2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4))
             for i in range(limites): sliders[i].verificar_click(mx, my)
                         
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -163,41 +174,46 @@ while ejecutando:
     
     if not simulacion_activa:
         cambio = False
-        limites = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
+        limites = 1 if figura_seleccionada == "barra" else (2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4))
+        
         for i in range(limites):
             if sliders[i].arrastrar(mx): cambio = True
         if cambio:
-            for i in range(limites):
-                if modo_slider == "masas": m_act[i] = sliders[i].valor
-                else: v_act[i] = -(sliders[i].valor * 100.0)
+            if figura_seleccionada == "barra":
+                if modo_slider == "masas":
+                    exponente_barra = sliders[0].valor  
+                    masas_barra = [float(j)**(exponente_barra - 1.0) for j in range(1, NUM_PARTICULAS_BARRA + 1)] 
+                else:
+                    vel_unificada_barra = -(sliders[0].valor * 100.0)
+                    # Forzamos un diferencial de velocidad lineal para inducir giro asimétrico en el lanzamiento
+                    # El extremo izquierdo saldrá más lento y el derecho más rápido
+                    vels_barra = [vel_unificada_barra + ((j - NUM_PARTICULAS_BARRA//2) * 25.0) for j in range(NUM_PARTICULAS_BARRA)]
+                m_act, v_act = masas_barra, vels_barra
+            else:
+                for i in range(limites):
+                    if modo_slider == "masas": m_act[i] = sliders[i].valor
+                    else: v_act[i] = -(sliders[i].valor * 100.0)
+                    
             motor.crear_figura(figura_seleccionada, m_act, v_act, False)
 
-    # --- Dibujar los rastros individuales de cada partícula ---
-    # Se limita el recorrido según la cantidad de vértices de la figura activa
-    limites_figura = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
-    for i in range(limites_figura):
-        if len(rastros_particulas[i]) > 1:
-            # Dibujamos las líneas con un grosor ligeramente menor (1px) para no saturar la pantalla
-            pygame.draw.lines(screen, COLORES_PARTICULAS[i], False, rastros_particulas[i], 1)
-
-    # Rastro del Centro de Masa (Rojo original, grosor 2px para que resalte)
     if len(rastro_cm) > 1: pygame.draw.lines(screen, (255, 100, 100), False, rastro_cm, 2)
 
     motor.space.debug_draw(draw_options)
     pygame.draw.circle(screen, (255, 0, 0), (int(pos_cm_real.x), int(pos_cm_real.y)), 6)
     
     if not simulacion_activa:
-        limites = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
+        limites = 1 if figura_seleccionada == "barra" else (2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4))
         for i in range(limites): sliders[i].dibujar(screen, (0, 150, 255) if modo_slider == "masas" else (46, 204, 113))
                 
     for r, txt, col in [(btn_triangulo_rect, "Triángulo", (0, 150, 255) if figura_seleccionada == "triangulo" else (60, 60, 60)),
                         (btn_cuadrado_rect, "Cuadrado", (0, 150, 255) if figura_seleccionada == "cuadrado" else (60, 60, 60)),
-                        (btn_cuerda_rect, "Cuerda", (0, 150, 255) if figura_seleccionada == "cuerda" else (60, 60, 60))]:
+                        (btn_cuererda_rect, "Cuerda", (0, 150, 255) if figura_seleccionada == "cuerda" else (60, 60, 60)),
+                        (btn_barra_rect, "Barra", (0, 150, 255) if figura_seleccionada == "barra" else (60, 60, 60))]:
         pygame.draw.rect(screen, col, r, border_radius=5)
-        screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 15, r.y + 7))
+        screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 12, r.y + 7))
             
     if not simulacion_activa:
-        txt_inst = f"CONFIGURACIÓN [{modo_slider.upper()}] | [M] Editar Masas | [V] Editar Velocidades (m/s) | [ENTER] Lanzar"
+        txt_inst = f"CONFIGURACIÓN [{modo_slider.upper()}] | [M] Editar Masas/Densidad | [V] Editar Velocidades (m/s) | [ENTER] Lanzar"
         txt_vel = "Velocidad CM: 0.00 m/s"
     else:
         txt_inst = "SIMULACIÓN DINÁMICA ACTIVA | Presiona [R] para reiniciar y ajustar valores"
