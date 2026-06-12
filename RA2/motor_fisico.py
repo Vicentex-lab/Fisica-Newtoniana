@@ -94,3 +94,4 @@ class MotorFisico:
         self.aceleracion_angular = vp.vec(0,0,0)
         self.torque = vp.vec(0,0,0)
         self.angulo_rotado = 0.0
+        
