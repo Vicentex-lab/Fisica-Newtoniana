@@ -36,25 +36,25 @@ class MotorFisico:
         if not self.densidad_variable:
             # Densidad uniforme
             if self.tipo_cuerpo == "Esfera sólida":
-                self.inercia = (2/5) * self.masa * (self.radio**2)
+                inercia_cm = (2/5) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón esférico":
-                self.inercia = (2/3) * self.masa * (self.radio**2)
+                inercia_cm = (2/3) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cilindro sólido":
-                self.inercia = (1/2) * self.masa * (self.radio**2)
+                inercia_cm = (1/2) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón cilíndrico":
-                self.inercia = self.masa * (self.radio**2)
+                inercia_cm = self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Barra cuadrada":
-                self.inercia = (1/3) * self.masa * (self.radio**2)
+                inercia_cm = (1/3) * self.masa * (self.radio**2)
         else:
             # Densidad variable (rho = k*r)
             if self.tipo_cuerpo == "Esfera sólida":
-                self.inercia = (4/9) * self.masa * (self.radio**2)
+                inercia_cm = (4/9) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón esférico":
-                self.inercia = (2/3) * self.masa * (self.radio**2) # No cambia, masa en el borde
+                inercia_cm = (2/3) * self.masa * (self.radio**2) # No cambia, masa en el borde
             elif self.tipo_cuerpo == "Cilindro sólido":
-                self.inercia = (3/5) * self.masa * (self.radio**2)
+                inercia_cm = (3/5) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón cilíndrico":
-                self.inercia = self.masa * (self.radio**2) # No cambia, masa en el borde
+                inercia_cm = self.masa * (self.radio**2) # No cambia, masa en el borde
         # APLICAR TEOREMA DE STEINER: I = I_cm + M*d^2
         self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
             
