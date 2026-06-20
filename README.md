@@ -63,5 +63,8 @@ Bitácora de reuniones:
 2. Se intentó hacer funcionar el programa sin el uso de la librería Pymunk (con un código que evidencia el uso de las ecuaciones físicas) pero cuenta con problemas de funcionalidad, tales como que la figura no rota más de una vez en el aire, sin importar las velocidades aplicadas a cada partícula. Se acordó continuar trabajando en esta parte para ver si es posible tener un código que sea más claro respecto a las ecuaciones físicas pero que también refleje adecuadamente los fenómenos físicos, el profesor hace énfasis en la parte del constraint, ya que esta puede estar fallando.
 3. Haciendo uso de Pymunk, no fue posible implementar un sistema continuo, pues con un número alto de partículas el motor físico no logra hacer el seguimiento y se deforma la figura. Se acordó descartar esta funcionalidad.
 
-- RA2:
+- Nuevas sugerencias para el programa del RA2:
+1. Reescribir la fórmula de la densidad de masa variable (Ejemplo λ= kx^n, donde n es un entero variable).
+2. Ver si es posible hacer una versión del programa con cuerpos discretos.
+3. Añadir una cuerda con dos partículas en sus extremos, donde en cada partícula la densidad sea variable.
 
