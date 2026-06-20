@@ -6,7 +6,7 @@
 
 Bitácora de reuniones:
 
-Primera reunión (viernes 8 de mayo):
+**Primera reunión (viernes 8 de mayo):**
 - Presentación de dos prototipos para el RA2 (uno en 2D y otro en 3D). Se decidió continuar trabajando en el programa en 3D que usa la librería VPython.
 
 - Mejoras sugeridas para el programa:
@@ -16,7 +16,7 @@ Primera reunión (viernes 8 de mayo):
 - Discusión de ideas respecto a qué contenidos evaluar para cada resultado de aprendizaje.
 
 
-Segunda reunión (viernes 15 de mayo):
+**Segunda reunión (viernes 15 de mayo):**
 - Correcciones aplicadas al programa del RA2.
 
 - Profesor menciona que quisiera enseñar en algún momento movimiento giroscópico (caso trompo).
@@ -33,7 +33,7 @@ Segunda reunión (viernes 15 de mayo):
 2. Realizar un lanzamiento de la figura y ver la magnitud de la velocidad y posición del centro de masa.
 3. Modificar el punto donde se encuentra el centro de masa, con dos figuras unidas por una cuerda o en una figura por si sola.
 
-Tercera reunión (viernes 29 de mayo):
+**Tercera reunión (viernes 29 de mayo):**
 - Correcciones aplicadas al programa del RA2.
 
 - Nuevas correcciones para el programa del RA2:
@@ -46,4 +46,22 @@ Tercera reunión (viernes 29 de mayo):
 - Correcciones para el programa del RA1:
 1. No aplicar velocidad angular a la figura; más bien aplicar ecuaciones de movimiento y velocidad a cada partícula del cuerpo discreto.
 2. Implementar sistema simple de dos partículas unidas por una cuerda para realizar pruebas.
-3. Ver constraint entre estas partículas.
+3. Ver constraint entre las partículas de cada figura.
+
+**Cuarta Reunión (viernes 5 de junio):**
+- Correcciones aplicadas al programa del RA1, ahora la figura lanzada gira si es que la velocidad que se le aplica a una de las partículas en el lanzamiento es distinta.
+- Correcciones 1 y 2 aplicadas al programa del RA2, aún queda por aplicar el teorema de Steiner.
+
+- Nuevas sugerencias para el programa del RA1:
+1. Al igual que en el centro de masa, añadir seguimiento de la trayectoria de las partículas de cada figura del programa.
+2. Hacer más intuitivo el código del programa, que se vea en donde se aplican las ecuaciones de movimiento y velocidad, ya que de momento la librería utilizada para el moto físco (Pymunk) se encarga de todo el proceso por detrás.
+3. Ver si es posible trabajar con sistemas continuos con densidad de masa variable (Ejemplo: λ= kx para una barra).
+
+**Quinta Reunión (viernes 12 de junio):**
+- Se conversa del programa del RA1, respecto a este se menciona que:
+1. Fue posible implementar la primera sugerencia de la reunión anterior.
+2. Se intentó hacer funcionar el programa sin el uso de la librería Pymunk (con un código que evidencia el uso de las ecuaciones físicas) pero cuenta con problemas de funcionalidad, tales como que la figura no rota más de una vez en el aire, sin importar las velocidades aplicadas a cada partícula. Se acordó continuar trabajando en esta parte para ver si es posible tener un código que sea más claro respecto a las ecuaciones físicas pero que también refleje adecuadamente los fenómenos físicos, el profesor hace énfasis en la parte del constraint, ya que esta puede estar fallando.
+3. Haciendo uso de Pymunk, no fue posible implementar un sistema continuo, pues con un número alto de partículas el motor físico no logra hacer el seguimiento y se deforma la figura. Se acordó descartar esta funcionalidad.
+
+- RA2:
+
