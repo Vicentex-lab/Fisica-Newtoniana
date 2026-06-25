@@ -37,42 +37,28 @@ class MotorFisico:
 
     def calcular_inercia(self):
         """Calcula el momento de inercia dinámicamente según el cuerpo seleccionado."""
-        inercia_cm = 0.0 # Variable temporal para el I en el centro de masa
+        
+        # 1. Lógica exclusiva para Sistema Discreto
         if self.tipo_cuerpo == "Sistema Discreto (2 Partículas)":
-            # Distancias relativas al eje de giro
             distancia1 = self.pos_p1 - self.pos_eje
             distancia2 = self.pos_p2 - self.pos_eje
             
             if self.densidad_variable:
-                # Tratamos self.masa y self.masa2 como densidades (kg/m^3)
-                volumen_particula = (4/3) * vp.pi * (0.3**3) # Radio visual de 0.3
+                volumen_particula = (4/3) * vp.pi * (0.3**3)
                 m1 = self.masa * volumen_particula
                 m2 = self.masa2 * volumen_particula
                 self.inercia = (m1 * (distancia1**2)) + (m2 * (distancia2**2))
             else:
-                # Usamos masa directa
                 self.inercia = (self.masa * (distancia1**2)) + (self.masa2 * (distancia2**2))
                 
-        else:
-            # ... [mantén tu lógica actual if/elif para cuerpos continuos] ...
-            if not self.densidad_variable:
-                if self.tipo_cuerpo == "Esfera sólida":
-                    inercia_cm = (2/5) * self.masa * (self.radio**2)
-                # ... (resto de tus cuerpos uniformes)
-            else:
-                n = self.n_densidad
-                if self.tipo_cuerpo == "Esfera sólida":
-                    inercia_cm = (2/3) * self.masa * (self.radio**2) * ((n + 3) / (n + 5))
-                # ... (resto de tus cuerpos con densidad rho = kr^n)
+            if self.inercia <= 0: 
+                self.inercia = 1e-9
+            return # Salir del método para no aplicar Steiner ni la lógica de continuos
 
-        # Aplicar Steiner SOLO a cuerpos continuos
-        if self.tipo_cuerpo != "Sistema Discreto (2 Partículas)":
-            self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
-            
-        if self.inercia <= 0: 
-            self.inercia = 1e-9
+        # 2. Lógica para Cuerpos Continuos
+        inercia_cm = 0.0 
+        
         if not self.densidad_variable:
-            # Densidad uniforme
             if self.tipo_cuerpo == "Esfera sólida":
                 inercia_cm = (2/5) * self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cascarón esférico":
@@ -84,23 +70,20 @@ class MotorFisico:
             elif self.tipo_cuerpo == "Barra cuadrada":
                 inercia_cm = (1/3) * self.masa * (self.radio**2)
         else:
-            # Densidad variable (rho = k*r^n)
             n = self.n_densidad
             if self.tipo_cuerpo == "Esfera sólida":
                 inercia_cm = (2/3) * self.masa * (self.radio**2) * ((n + 3) / (n + 5))
-            elif self.tipo_cuerpo == "Cascarón esférico":
-                inercia_cm = (2/3) * self.masa * (self.radio**2) # No cambia
+            elif self.tipo_cuerpo == "Cascarón esférico" or self.tipo_cuerpo == "Cascarón cilíndrico":
+                # Cascarones no varían su inercia con r^n de la misma forma, mantenemos estándar
+                inercia_cm = (2/3) * self.masa * (self.radio**2) if "esférico" in self.tipo_cuerpo else self.masa * (self.radio**2)
             elif self.tipo_cuerpo == "Cilindro sólido":
                 inercia_cm = self.masa * (self.radio**2) * ((n + 2) / (n + 4))
-            elif self.tipo_cuerpo == "Cascarón cilíndrico":
-                inercia_cm = self.masa * (self.radio**2) # No cambia
             else:
-                # Fallback de seguridad para la Barra cuadrada
                 inercia_cm = (1/3) * self.masa * (self.radio**2)
-        # APLICAR TEOREMA DE STEINER: I = I_cm + M*d^2
+
+        # Aplicar Teorema de Steiner para cuerpos continuos
         self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
             
-        # Evitar división por cero 
         if self.inercia <= 0: 
             self.inercia = 1e-9
 

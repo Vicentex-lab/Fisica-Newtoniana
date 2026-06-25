@@ -141,25 +141,19 @@ class SimulacionVisual:
             del self.eje_steiner
         
         textura = vp.textures.wood
+        
         if self.motor.tipo_cuerpo == "Sistema Discreto (2 Partículas)":
-            # Cuerda (sin masa idealmente, radio mínimo)
             cuerda = vp.cylinder(pos=vp.vec(self.motor.pos_p1, 0, 0), 
                                  axis=vp.vec(self.motor.pos_p2 - self.motor.pos_p1, 0, 0), 
                                  radius=0.05, color=vp.color.white)
-            # Partículas en los extremos
             p1 = vp.sphere(pos=vp.vec(self.motor.pos_p1, 0, 0), radius=0.3, color=vp.color.cyan)
             p2 = vp.sphere(pos=vp.vec(self.motor.pos_p2, 0, 0), radius=0.3, color=vp.color.magenta)
-            
-            # Agrupar en un cuerpo compuesto
             self.cuerpo_3d = vp.compound([cuerda, p1, p2])
             
         elif "Esfera" in self.motor.tipo_cuerpo or "Cascarón esférico" in self.motor.tipo_cuerpo:
-        
-        
-
-        if "Esfera" in self.motor.tipo_cuerpo or "Cascarón esférico" in self.motor.tipo_cuerpo:
             self.cuerpo_3d = vp.sphere(pos=vp.vec(0,0,0), radius=self.motor.radio, texture=textura)
             vp.cylinder(pos=vp.vec(0, -self.motor.radio*1.5, 0), axis=vp.vec(0, self.motor.radio*3, 0), radius=0.05)
+            
         elif self.motor.tipo_cuerpo == "Barra cuadrada":
             self.cuerpo_3d = vp.box(pos=vp.vec(0,0,0), 
                                     length=self.motor.radio*2, 
@@ -167,12 +161,13 @@ class SimulacionVisual:
                                     width=self.motor.radio*0.5, 
                                     texture=textura)
         else:
-            self.cuerpo_3d = vp.cylinder(pos=vp.vec(0, -self.motor.radio, 0), axis=vp.vec(0, self.motor.radio*2, 0), 
+            self.cuerpo_3d = vp.cylinder(pos=vp.vec(0, -self.motor.radio, 0), 
+                                         axis=vp.vec(0, self.motor.radio*2, 0), 
                                          radius=self.motor.radio, texture=textura)
             
         self.flecha_f = vp.arrow(pos=vp.vec(self.motor.pos_aplicacion_x, 0, 0), 
                                 axis=vp.vec(0, 0, 0), color=vp.color.red, shaftwidth=0.1)
-        #Crear el indicador visual del eje modificado por Steiner (Color Amarillo)
+                                
         largo_eje = self.motor.radio * 3
         self.eje_steiner = vp.cylinder(pos=vp.vec(self.motor.pos_eje, -largo_eje/2, 0), 
                                        axis=vp.vec(0, largo_eje, 0), 
