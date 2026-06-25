@@ -27,6 +27,7 @@ class MotorFisico:
         self.pos_eje = 0.0 #Posición del eje de rotación (d)
         self.angulo_rotado = 0.0                      # Acumulador de radianes
         self.inercia = 0.0 # Escalar
+        self.n_densidad = 1
         self.calcular_inercia()
         
 
@@ -46,15 +47,19 @@ class MotorFisico:
             elif self.tipo_cuerpo == "Barra cuadrada":
                 inercia_cm = (1/3) * self.masa * (self.radio**2)
         else:
-            # Densidad variable (rho = k*r)
+            # Densidad variable (rho = k*r^n)
+            n = self.n_densidad
             if self.tipo_cuerpo == "Esfera sólida":
-                inercia_cm = (4/9) * self.masa * (self.radio**2)
+                inercia_cm = (2/3) * self.masa * (self.radio**2) * ((n + 3) / (n + 5))
             elif self.tipo_cuerpo == "Cascarón esférico":
-                inercia_cm = (2/3) * self.masa * (self.radio**2) # No cambia, masa en el borde
+                inercia_cm = (2/3) * self.masa * (self.radio**2) # No cambia
             elif self.tipo_cuerpo == "Cilindro sólido":
-                inercia_cm = (3/5) * self.masa * (self.radio**2)
+                inercia_cm = self.masa * (self.radio**2) * ((n + 2) / (n + 4))
             elif self.tipo_cuerpo == "Cascarón cilíndrico":
-                inercia_cm = self.masa * (self.radio**2) # No cambia, masa en el borde
+                inercia_cm = self.masa * (self.radio**2) # No cambia
+            else:
+                # Fallback de seguridad para la Barra cuadrada
+                inercia_cm = (1/3) * self.masa * (self.radio**2)
         # APLICAR TEOREMA DE STEINER: I = I_cm + M*d^2
         self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
             

@@ -66,7 +66,14 @@ class SimulacionVisual:
         vp.menu(choices=['Esfera sólida', 'Cascarón esférico', 'Cilindro sólido', 'Cascarón cilíndrico', 'Barra cuadrada'], 
                 bind=self.cambiar_forma)
         self.escena.append_to_caption('  ')
-        vp.checkbox(bind=self.toggle_densidad, text='Densidad variable (ρ = kr)')
+        # Actualizamos el texto del checkbox para que muestre r^n
+        vp.checkbox(bind=self.toggle_densidad, text='Densidad variable (ρ = krⁿ)')
+        self.escena.append_to_caption('\n\n')
+        
+        # SLIDER PARA EL EXPONENTE N
+        vp.wtext(text="Exponente n (Densidad): ")
+        self.slider_n = vp.slider(min=1, max=10, step=1, value=1, length=200, bind=self.sync_sliders)
+        self.input_n = vp.winput(text="1", bind=self.sync_inputs)
         self.escena.append_to_caption('\n\n')
 
         # Sliders y Entradas de Texto Sincronizadas
@@ -187,6 +194,7 @@ class SimulacionVisual:
         self.input_fz.text = f"{self.slider_fz.value:.1f}"
         self.input_pos_x.text = f"{self.slider_pos_x.value:.1f}"
         self.input_eje.text = f"{self.slider_eje.value:.1f}"
+        self.input_n.text = f"{int(self.slider_n.value)}"
         self.aplicar_cambios()
 
     def sync_inputs(self, evento=None):
@@ -199,6 +207,7 @@ class SimulacionVisual:
             self.slider_fz.value = float(self.input_fz.text)
             self.slider_pos_x.value = float(self.input_pos_x.text)
             self.slider_eje.value = float(self.input_eje.text)
+            self.slider_n.value = int(self.input_n.text)
             self.duracion_max = float(self.input_duracion.text)
             self.aplicar_cambios()
         except ValueError:
@@ -211,6 +220,7 @@ class SimulacionVisual:
             self.input_pos_x.text = f"{self.slider_pos_x.value:.1f}"
             self.input_duracion.text = f"{self.duracion_max}"
             self.input_eje.text = f"{self.slider_eje.value:.1f}"
+            self.input_n.text = f"{int(self.slider_n.value)}"
 
     def aplicar_cambios(self):
         """Sincroniza los valores visuales validados con el motor físico."""
@@ -223,6 +233,7 @@ class SimulacionVisual:
         self.motor.fuerza_vec = vp.vec(self.slider_fx.value, self.slider_fy.value, self.slider_fz.value)
         self.motor.pos_aplicacion_x = self.slider_pos_x.value
         self.motor.pos_eje = self.slider_eje.value
+        self.motor.n_densidad = int(self.slider_n.value)
         self.motor.actualizar_parametros(masa=self.slider_masa.value, radio=self.slider_radio.value)
         self.motor.calcular_inercia()
         # Actualizar visual en pausa
