@@ -236,6 +236,9 @@ class SimulacionVisual:
         self.motor.n_densidad = int(self.slider_n.value)
         self.motor.actualizar_parametros(masa=self.slider_masa.value, radio=self.slider_radio.value)
         self.motor.calcular_inercia()
+        
+        #Forzar la actualización del texto de métricas 
+        self.texto_metricas.text = self.formatear_metricas()
         # Actualizar visual en pausa
         if not self.en_ejecucion:
             self.flecha_f.pos = vp.vec(self.motor.pos_aplicacion_x, 0, 0)
