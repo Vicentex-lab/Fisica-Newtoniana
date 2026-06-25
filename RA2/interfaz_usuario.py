@@ -63,7 +63,7 @@ class SimulacionVisual:
         self.escena.append_to_caption('\n\n')
 
         # Selector de cuerpo rígido y densidad
-        vp.menu(choices=['Esfera sólida', 'Cascarón esférico', 'Cilindro sólido', 'Cascarón cilíndrico', 'Barra cuadrada'], 
+        vp.menu(choices=['Esfera sólida', 'Cascarón esférico', 'Cilindro sólido', 'Cascarón cilíndrico', 'Barra cuadrada', 'Sistema Discreto (2 Partículas)'], 
                 bind=self.cambiar_forma)
         self.escena.append_to_caption('  ')
         # Actualizamos el texto del checkbox para que muestre r^n
@@ -75,6 +75,13 @@ class SimulacionVisual:
         self.slider_n = vp.slider(min=1, max=10, step=1, value=1, length=200, bind=self.sync_sliders)
         self.input_n = vp.winput(text="1", bind=self.sync_inputs)
         self.escena.append_to_caption('\n\n')
+        
+        #  controles para la Partícula 2
+        vp.wtext(text="Masa/Densidad P2: ")
+        self.slider_masa2 = vp.slider(min=0.1, max=10, value=1.0, length=200, bind=self.sync_sliders)
+        self.input_masa2 = vp.winput(text="1.0", bind=self.sync_inputs)
+        self.escena.append_to_caption('\n')
+        
 
         # Sliders y Entradas de Texto Sincronizadas
         vp.wtext(text="Masa (kg): ")
@@ -132,8 +139,23 @@ class SimulacionVisual:
         if hasattr(self, 'eje_steiner'):
             self.eje_steiner.visible = False
             del self.eje_steiner
-
+        
         textura = vp.textures.wood
+        if self.motor.tipo_cuerpo == "Sistema Discreto (2 Partículas)":
+            # Cuerda (sin masa idealmente, radio mínimo)
+            cuerda = vp.cylinder(pos=vp.vec(self.motor.pos_p1, 0, 0), 
+                                 axis=vp.vec(self.motor.pos_p2 - self.motor.pos_p1, 0, 0), 
+                                 radius=0.05, color=vp.color.white)
+            # Partículas en los extremos
+            p1 = vp.sphere(pos=vp.vec(self.motor.pos_p1, 0, 0), radius=0.3, color=vp.color.cyan)
+            p2 = vp.sphere(pos=vp.vec(self.motor.pos_p2, 0, 0), radius=0.3, color=vp.color.magenta)
+            
+            # Agrupar en un cuerpo compuesto
+            self.cuerpo_3d = vp.compound([cuerda, p1, p2])
+            
+        elif "Esfera" in self.motor.tipo_cuerpo or "Cascarón esférico" in self.motor.tipo_cuerpo:
+        
+        
 
         if "Esfera" in self.motor.tipo_cuerpo or "Cascarón esférico" in self.motor.tipo_cuerpo:
             self.cuerpo_3d = vp.sphere(pos=vp.vec(0,0,0), radius=self.motor.radio, texture=textura)
@@ -195,6 +217,12 @@ class SimulacionVisual:
         self.input_pos_x.text = f"{self.slider_pos_x.value:.1f}"
         self.input_eje.text = f"{self.slider_eje.value:.1f}"
         self.input_n.text = f"{int(self.slider_n.value)}"
+        self.motor.masa2 = self.slider_masa2.value
+        # Actualiza posiciones de partículas basadas en el radio para la cuerda
+        self.motor.pos_p1 = -self.slider_radio.value
+        self.motor.pos_p2 = self.slider_radio.value
+        
+        self.motor.actualizar_parametros(masa=self.slider_masa.value, radio=self.slider_radio.value)
         self.aplicar_cambios()
 
     def sync_inputs(self, evento=None):

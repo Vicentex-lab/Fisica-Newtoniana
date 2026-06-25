@@ -28,12 +28,49 @@ class MotorFisico:
         self.angulo_rotado = 0.0                      # Acumulador de radianes
         self.inercia = 0.0 # Escalar
         self.n_densidad = 1
+        # Nuevas variables para el sistema discreto
+        self.masa2 = 1.0          # Masa de la segunda partícula
+        self.pos_p1 = -radio      # Posición X de la partícula 1
+        self.pos_p2 = radio       # Posición X de la partícula 2
         self.calcular_inercia()
         
 
     def calcular_inercia(self):
         """Calcula el momento de inercia dinámicamente según el cuerpo seleccionado."""
         inercia_cm = 0.0 # Variable temporal para el I en el centro de masa
+        if self.tipo_cuerpo == "Sistema Discreto (2 Partículas)":
+            # Distancias relativas al eje de giro
+            distancia1 = self.pos_p1 - self.pos_eje
+            distancia2 = self.pos_p2 - self.pos_eje
+            
+            if self.densidad_variable:
+                # Tratamos self.masa y self.masa2 como densidades (kg/m^3)
+                volumen_particula = (4/3) * vp.pi * (0.3**3) # Radio visual de 0.3
+                m1 = self.masa * volumen_particula
+                m2 = self.masa2 * volumen_particula
+                self.inercia = (m1 * (distancia1**2)) + (m2 * (distancia2**2))
+            else:
+                # Usamos masa directa
+                self.inercia = (self.masa * (distancia1**2)) + (self.masa2 * (distancia2**2))
+                
+        else:
+            # ... [mantén tu lógica actual if/elif para cuerpos continuos] ...
+            if not self.densidad_variable:
+                if self.tipo_cuerpo == "Esfera sólida":
+                    inercia_cm = (2/5) * self.masa * (self.radio**2)
+                # ... (resto de tus cuerpos uniformes)
+            else:
+                n = self.n_densidad
+                if self.tipo_cuerpo == "Esfera sólida":
+                    inercia_cm = (2/3) * self.masa * (self.radio**2) * ((n + 3) / (n + 5))
+                # ... (resto de tus cuerpos con densidad rho = kr^n)
+
+        # Aplicar Steiner SOLO a cuerpos continuos
+        if self.tipo_cuerpo != "Sistema Discreto (2 Partículas)":
+            self.inercia = inercia_cm + (self.masa * (self.pos_eje**2))
+            
+        if self.inercia <= 0: 
+            self.inercia = 1e-9
         if not self.densidad_variable:
             # Densidad uniforme
             if self.tipo_cuerpo == "Esfera sólida":
