@@ -231,11 +231,13 @@ while ejecutando:
         limites = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
         for i in range(limites): sliders[i].dibujar(screen, (0, 150, 255) if modo_slider == "masas" else (46, 204, 113))
                 
-    for r, txt, col in [(btn_triangulo_rect, "Triángulo", (0, 150, 255) if figura_seleccionada == "triangulo" else (60, 60, 60)),
+        for r, txt, col in [(btn_triangulo_rect, "Triángulo", (0, 150, 255) if figura_seleccionada == "triangulo" else (60, 60, 60)),
                         (btn_cuadrado_rect, "Cuadrado", (0, 150, 255) if figura_seleccionada == "cuadrado" else (60, 60, 60)),
                         (btn_cuerda_rect, "Cuerda", (0, 150, 255) if figura_seleccionada == "cuerda" else (60, 60, 60))]:
-        pygame.draw.rect(screen, col, r, border_radius=5)
-        screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 15, r.y + 7))
+            pygame.draw.rect(screen, col, r, border_radius=5)
+            screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 15, r.y + 7))
+        
+    
             
     if not simulacion_activa:
         txt_inst = f"CONFIGURACIÓN [{modo_slider.upper()}] | [M] Editar Masas | [V] Editar Velocidades (m/s) | [ENTER] Lanzar"
