@@ -51,6 +51,7 @@ class MotorFisico:
                 rho1 = self.masa * (abs(self.pos_p1) ** self.n_densidad)
                 rho2 = self.masa2 * (abs(self.pos_p2) ** self.n_densidad)
                 
+                # densidad = masa/volumen
                 m1 = rho1 * volumen_particula
                 m2 = rho2 * volumen_particula
                 
