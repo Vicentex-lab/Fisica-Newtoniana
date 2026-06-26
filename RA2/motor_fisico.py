@@ -45,15 +45,22 @@ class MotorFisico:
             
             if self.densidad_variable:
                 volumen_particula = (4/3) * vp.pi * (0.3**3)
-                m1 = self.masa * volumen_particula
-                m2 = self.masa2 * volumen_particula
+                
+                # Evaluamos la densidad variable en la coordenada exacta de cada partícula
+                # rho = k * |r|^n
+                rho1 = self.masa * (abs(self.pos_p1) ** self.n_densidad)
+                rho2 = self.masa2 * (abs(self.pos_p2) ** self.n_densidad)
+                
+                m1 = rho1 * volumen_particula
+                m2 = rho2 * volumen_particula
+                
                 self.inercia = (m1 * (distancia1**2)) + (m2 * (distancia2**2))
             else:
                 self.inercia = (self.masa * (distancia1**2)) + (self.masa2 * (distancia2**2))
                 
             if self.inercia <= 0: 
                 self.inercia = 1e-9
-            return # Salir del método para no aplicar Steiner ni la lógica de continuos
+            return # Salir del método
 
         # 2. Lógica para Cuerpos Continuos
         inercia_cm = 0.0 
