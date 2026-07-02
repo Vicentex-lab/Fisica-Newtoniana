@@ -4,7 +4,7 @@ from motor_fisico import MotorFisico
 
 
 
-# 2. VISUALIZACIÓN E INTERFAZ (VPython)
+# 2. VISUALIZACIÓN E INTERFAZ 
 
 
 class SimulacionVisual:
