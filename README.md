@@ -68,3 +68,11 @@ Bitácora de reuniones:
 2. Ver si es posible hacer una versión del programa con cuerpos discretos.
 3. Añadir una cuerda con dos partículas en sus extremos, donde en cada partícula la densidad sea variable.
 
+**Sexta Reunión (viernes 26 de junio):**
+- Se aplicaron las correcciones al programa del RA1, en particular, se conservó la librería Pymunk puesto que facilita la creación de las figuras y la aplicación del constraint; por otra parte, para aplicar las ecuaciones de itinerario dentro del programa, lo que se hizo fue hacer asignación de funciones (callbacks) para que el programa calcule la posición y la velocidad de las partículas usando las ecuaciones escritas en el código. Finalmente, también se desarrolló una funcionalidad para controlar el zoom en el programa, con el fin de poder apreciar de mejor manera la trayectoria de las partículas. Con esto se da por terminado el programa del RA1.
+
+- Respecto al RA2, se aplicaron las correcciones mencionadas en la reunión anterior y como mejora se propone alinear el eje de giro con la fuerza aplicada, ya que de momento es estático.
+
+- Finalmente, el profesor menciona que se debe elaborar un informe respecto a los programas elaborados, analizando los contenidos que abarcan, las herramientas y contenidos que son necesarios para poder replicarlos y las posibles dificultades que pueden haber para su desarrollo.  
+
+
