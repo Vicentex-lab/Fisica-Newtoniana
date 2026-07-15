@@ -12,12 +12,29 @@ WIDTH, HEIGHT = screen.get_size()
 ALTURA_SUELO = HEIGHT - 50 
 
 motor = MotorFisica(WIDTH, HEIGHT, ALTURA_SUELO)
+
+ZOOM = 0.65 # Se puede cambiar esto: 1.0 es normal, 0.5 aleja a la mitad, 0.35 aleja bastante.
+
+def aplicar_zoom(punto):
+    """
+    Convierte una coordenada física en una coordenada de pantalla escalada.
+    Mantiene el ALTURA_SUELO anclado en su posición real de la pantalla.
+    """
+    x, y = punto
+    nuevo_x = x * ZOOM
+    nuevo_y = (y * ZOOM) + (ALTURA_SUELO * (1 - ZOOM))
+    return (int(nuevo_x), int(nuevo_y))
+
 draw_options = pymunk.pygame_util.DrawOptions(screen)
+# Aplicamos la matriz de transformación al renderizador de Pymunk
+# a y d escalan en los ejes x e y, respectivamente, según el zoom configurado. b y c forman diagonales (por eso son 0)
+# ty luego se le suma a la altura original en nuevo_y para trasladar el suelo hacia abajo luego de que el zoom lo desplace
+draw_options.transform = pymunk.Transform(a=ZOOM, b=0, c=0, d=ZOOM, tx=0, ty=ALTURA_SUELO * (1 - ZOOM)) 
+
 
 fuente_grande = pygame.font.SysFont("Arial", 20, bold=True)
 fuente_normal = pygame.font.SysFont("Arial", 16)
 
-# Memoria aislada para configuraciones pre-vuelo
 masas_triangulo = [1.0, 1.0, 1.0] 
 vels_triangulo = [-850.0, -850.0, -850.0]
 masas_cuadrado = [1.0, 1.0, 1.0, 1.0] 
@@ -30,17 +47,13 @@ modo_slider = "masas"
 simulacion_activa = False  
 rastro_cm = [] 
 
-# --- Lista de listas para almacenar las trayectorias de cada partícula ---
-# Soporta hasta 4 partículas (que es el máximo de partículas en las figuras)
 rastros_particulas = [[], [], [], []]
-# Paleta de colores para diferenciar visualmente cada partícula
 COLORES_PARTICULAS = [
-    (0, 255, 255),   # Cyan para Partícula 1
-    (255, 0, 255),   # Magenta para Partícula 2
-    (0, 255, 0),     # Verde brillante para Partícula 3
-    (255, 165, 0)    # Naranja para Partícula 4
+    (0, 255, 255),   
+    (255, 0, 255),   
+    (0, 255, 0),     
+    (255, 165, 0)    
 ]
-# -----------------------------------------------------------------------------
 
 class Slider:
     def __init__(self, x, y, ancho, min_val, max_val, val_inicial, etiqueta):
@@ -89,7 +102,6 @@ def actualizar_interfaz_sliders():
             sliders[i].etiqueta_texto = f"Velocidad Inicial Partícula {i+1}"
         sliders[i].actualizar_boton()
 
-# Inicialización inicial controlada
 motor.crear_figura(figura_seleccionada, masas_triangulo, vels_triangulo, False)
 actualizar_interfaz_sliders()
 
@@ -101,9 +113,27 @@ btn_cuerda_rect = pygame.Rect(270, 360, 150, 35)
 while ejecutando:
     screen.fill((15, 15, 15))
     
-    for x in range(0, WIDTH, 100): pygame.draw.line(screen, (40, 40, 40), (x, 0), (x, HEIGHT), 1)
-    for y in range(0, HEIGHT, 100): pygame.draw.line(screen, (40, 40, 40), (0, y), (WIDTH, y), 1)
-    pygame.draw.line(screen, (70, 70, 70), (0, ALTURA_SUELO), (WIDTH, ALTURA_SUELO), 3)
+    # Dibujo de cuadricula escalada
+
+    # Ajustamos el rango de la malla para que cubra el mundo virtual expandido
+    rango_x = int(WIDTH / ZOOM) + 1000
+    rango_y = int(HEIGHT / ZOOM) + 2000
+    
+    # Lineas verticales
+    for x in range(-1000, rango_x, 100):
+        p1 = aplicar_zoom((x, -rango_y))
+        p2 = aplicar_zoom((x, ALTURA_SUELO))
+        pygame.draw.line(screen, (35, 35, 35), p1, p2, 1)
+        
+    # Lineas horizontales
+    for y in range(-rango_y, int(ALTURA_SUELO) + 100, 100):
+        p1 = aplicar_zoom((-1000, y))
+        p2 = aplicar_zoom((rango_x, y))
+        pygame.draw.line(screen, (35, 35, 35), p1, p2, 1)
+        
+    # Línea del Suelo 
+    pygame.draw.line(screen, (70, 70, 70), aplicar_zoom((-1000, ALTURA_SUELO)), aplicar_zoom((rango_x, ALTURA_SUELO)), 3)
+    # -----------------------------------------------------------------
     
     if figura_seleccionada == "triangulo": m_act, v_act = masas_triangulo, vels_triangulo
     elif figura_seleccionada == "cuadrado": m_act, v_act = masas_cuadrado, vels_cuadrado
@@ -113,11 +143,10 @@ while ejecutando:
 
     if simulacion_activa:
         motor.actualizar(1.0 / 60.0)
-        rastro_cm.append((int(pos_cm_real.x), int(pos_cm_real.y)))
-        
-        # --- Capturar la posición actual de cada partícula viva en el motor ---
+        # Guardamos siempre las posiciones físicas reales (sin zoom) en las listas
+        rastro_cm.append((pos_cm_real.x, pos_cm_real.y))
         for i, particula in enumerate(motor.lista_particulas):
-            rastros_particulas[i].append((int(particula.position.x), int(particula.position.y)))
+            rastros_particulas[i].append((particula.position.x, particula.position.y))
         
     mx, my = pygame.mouse.get_pos()
     
@@ -151,7 +180,6 @@ while ejecutando:
                 elif figura_seleccionada == "cuadrado": m_act, v_act = masas_cuadrado, vels_cuadrado
                 else: m_act, v_act = masas_cuerda, vels_cuerda
                 actualizar_interfaz_sliders()
-                # --- Limpiar rastros si se cambia de figura en edición ---
                 rastros_particulas = [[], [], [], []]
                 motor.crear_figura(figura_seleccionada, m_act, v_act, False)
             
@@ -172,35 +200,44 @@ while ejecutando:
                 else: v_act[i] = -(sliders[i].valor * 100.0)
             motor.crear_figura(figura_seleccionada, m_act, v_act, False)
 
-    # --- Dibujar los rastros individuales de cada partícula ---
-    # Se limita el recorrido según la cantidad de vértices de la figura activa
+    # --- Dibujar los rastros individuales con zoom ---
     limites_figura = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
     for i in range(limites_figura):
         if len(rastros_particulas[i]) > 1:
-            # Dibujamos las líneas con un grosor ligeramente menor (1px) para no saturar la pantalla
-            pygame.draw.lines(screen, COLORES_PARTICULAS[i], False, rastros_particulas[i], 1)
+            # Transformamos la ruta física al vuelo antes de dibujarla
+            rastros_escalados = [aplicar_zoom(p) for p in rastros_particulas[i]]
+            pygame.draw.lines(screen, COLORES_PARTICULAS[i], False, rastros_escalados, 1)
 
-    # Rastro del Centro de Masa (Rojo original, grosor 2px para que resalte)
-    if len(rastro_cm) > 1: pygame.draw.lines(screen, (255, 100, 100), False, rastro_cm, 2)
+    # Rastro del CM con zoom
+    if len(rastro_cm) > 1: 
+        rastro_cm_escalado = [aplicar_zoom(p) for p in rastro_cm]
+        pygame.draw.lines(screen, (255, 100, 100), False, rastro_cm_escalado, 2)
 
+    # Dibuja los cuerpos de pymunk ya afectados por draw_options.transform
     motor.space.debug_draw(draw_options)
-    pygame.draw.circle(screen, (255, 0, 0), (int(pos_cm_real.x), int(pos_cm_real.y)), 6)
     
+    # Círculo representativo del CM (Aplicamos zoom también)
+    cm_escalado = aplicar_zoom((pos_cm_real.x, pos_cm_real.y))
+    pygame.draw.circle(screen, (255, 0, 0), cm_escalado, 6)
+    
+    # Interfaz de usuario (Se dibuja sin zoom para que se lea correctamente)
     if not simulacion_activa:
         limites = 2 if figura_seleccionada == "cuerda" else (3 if figura_seleccionada == "triangulo" else 4)
         for i in range(limites): sliders[i].dibujar(screen, (0, 150, 255) if modo_slider == "masas" else (46, 204, 113))
                 
-    for r, txt, col in [(btn_triangulo_rect, "Triángulo", (0, 150, 255) if figura_seleccionada == "triangulo" else (60, 60, 60)),
+        for r, txt, col in [(btn_triangulo_rect, "Triángulo", (0, 150, 255) if figura_seleccionada == "triangulo" else (60, 60, 60)),
                         (btn_cuadrado_rect, "Cuadrado", (0, 150, 255) if figura_seleccionada == "cuadrado" else (60, 60, 60)),
                         (btn_cuerda_rect, "Cuerda", (0, 150, 255) if figura_seleccionada == "cuerda" else (60, 60, 60))]:
-        pygame.draw.rect(screen, col, r, border_radius=5)
-        screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 15, r.y + 7))
+            pygame.draw.rect(screen, col, r, border_radius=5)
+            screen.blit(fuente_normal.render(txt, True, (255, 255, 255)), (r.x + 15, r.y + 7))
+        
+    
             
     if not simulacion_activa:
-        txt_inst = f"CONFIGURACIÓN [{modo_slider.upper()}] | [M] Editar Masas | [V] Editar Velocidades (m/s) | [ENTER] Lanzar"
+        txt_inst = f"Configuración [{modo_slider.upper()}] | [M] Editar Masas | [V] Editar Velocidades (m/s) | [ENTER] Lanzar"
         txt_vel = "Velocidad CM: 0.00 m/s"
     else:
-        txt_inst = "SIMULACIÓN DINÁMICA ACTIVA | Presiona [R] para reiniciar y ajustar valores"
+        txt_inst = "Simulación Activa | Presiona [R] para reiniciar y ajustar valores"
         txt_vel = f"Velocidad CM: {velocidad_m_s:.2f} m/s"
         
     screen.blit(fuente_normal.render(txt_inst, True, (255, 255, 255)), (20, 20))
